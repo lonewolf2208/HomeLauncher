@@ -38,7 +38,6 @@ class PreviewLauncherActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         usageAccessGrantedState.value = UsageAccessUtils.hasUsageAccess(this)
-        AppUsageMonitorWorker.enqueue(this)
 
         setContent {
             val uiState by launcherViewModel.uiState.collectAsState()
