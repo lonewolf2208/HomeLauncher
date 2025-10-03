@@ -13,28 +13,26 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.example.launcherapp.domain.model.AppInfo
 import com.example.launcherapp.data.usage.AppUsageMonitorWorker
-import com.example.launcherapp.data.usage.UsageAccessUtils
+import com.example.launcherapp.domain.model.AppInfo
+import com.example.launcherapp.presentation.launcher.ActiveLauncherScreen
 import com.example.launcherapp.presentation.launcher.ActiveLauncherViewModel
-import com.example.launcherapp.presentation.launcher.LauncherActivityContent
+import com.example.launcherapp.presentation.launcher.AppSelectionDialog
 import com.example.launcherapp.presentation.launcher.LauncherViewModelFactory
-import com.example.launcherapp.presentation.launcher.PreviewLauncherViewModel
 
-class MainActivity : ComponentActivity() {
+class ActiveLauncherActivity : ComponentActivity() {
 
     private val requestRoleLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { /* result handled by system */ }
 
-    private val activeLauncherViewModel: ActiveLauncherViewModel by viewModels {
-        LauncherViewModelFactory(this)
-    }
-
-    private val previewLauncherViewModel: PreviewLauncherViewModel by viewModels {
+    private val launcherViewModel: ActiveLauncherViewModel by viewModels {
         LauncherViewModelFactory(this)
     }
 
@@ -42,55 +40,93 @@ class MainActivity : ComponentActivity() {
     private val showPasswordPrompt = mutableStateOf(false)
     private val passwordError = mutableStateOf<String?>(null)
     private var pendingUnlockAction: (() -> Unit)? = null
-    private val isHomeLauncherState = mutableStateOf(false)
     private var suppressNextLeaveGuard = false
-    private val usageAccessGrantedState = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        isHomeLauncherState.value = isDefaultLauncher()
-        usageAccessGrantedState.value = UsageAccessUtils.hasUsageAccess(this)
         AppUsageMonitorWorker.enqueue(this)
+
         setContent {
-            LauncherActivityContent(
-                isHomeLauncher = isHomeLauncherState.value,
-                hasUsageAccess = usageAccessGrantedState.value,
+            val uiState by launcherViewModel.uiState.collectAsState()
+            var showAppSelection by remember { mutableStateOf(false) }
+            var selectedPackages by remember { mutableStateOf(uiState.allowedPackages.toSet()) }
+
+            LaunchedEffect(Unit) {
+                launcherViewModel.loadApps()
+                launcherViewModel.refreshUsage()
+            }
+
+            LaunchedEffect(uiState.allowedPackages) {
+                if (!showAppSelection) {
+                    selectedPackages = uiState.allowedPackages.toSet()
+                }
+            }
+
+            ActiveLauncherScreen(
+                uiState = uiState,
                 showPasswordPrompt = showPasswordPrompt.value,
                 passwordError = passwordError.value,
-                activeViewModel = activeLauncherViewModel,
-                previewViewModel = previewLauncherViewModel,
                 onAttemptUnlock = { attemptUnlock(it) },
                 onCancelUnlock = { cancelUnlock() },
+                onRequestSetLauncher = {
+                    if (uiState.selectionLocked) {
+                        return@ActiveLauncherScreen
+                    }
+                    if (uiState.availableApps.isNotEmpty()) {
+                        selectedPackages = uiState.allowedPackages.toSet()
+                        showAppSelection = true
+                    }
+                },
                 onOpenDefaultSettings = { ensureUnlocked { openDefaultAppsSettings() } },
                 onOpenSystemSettings = { ensureUnlocked { openSystemSettings() } },
                 onOpenApp = { app -> openApp(app) },
-                onLongPressApp = { app -> ensureUnlocked { openAppDetails(app) } },
-                onRequestUsagePermission = { UsageAccessUtils.openUsageAccessSettings(this) },
-                onSelectionApplied = { ensureUnlocked { requestHomeRole() } }
+                onLongPressApp = { app -> ensureUnlocked { openAppDetails(app) } }
             )
+
+            if (showAppSelection) {
+                AppSelectionDialog(
+                    apps = uiState.availableApps,
+                    initialSelection = selectedPackages,
+                    initialLimits = uiState.usageSnapshots.mapValues { it.value.limitMinutes },
+                    onConfirm = { selection, limits ->
+                        if (selection.isNotEmpty()) {
+                            val confirmed = selection.toSet()
+                            selectedPackages = confirmed
+                            launcherViewModel.applySelection(
+                                packages = confirmed,
+                                usageLimitsMinutes = limits,
+                                lockSelection = true
+                            )
+                            showAppSelection = false
+                            ensureUnlocked { requestHomeRole() }
+                        }
+                    },
+                    onDismiss = { showAppSelection = false }
+                )
+            }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        isUnlocked = false
         if (!isDefaultLauncher()) {
-            if (previewLauncherViewModel.uiState.value.selectionLocked) {
-                previewLauncherViewModel.unlockSelection()
-            }
+            startActivity(
+                Intent(this, PreviewLauncherActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                }
+            )
+            finish()
+            return
         }
-        isHomeLauncherState.value = isDefaultLauncher()
+        isUnlocked = false
         suppressNextLeaveGuard = false
-        usageAccessGrantedState.value = UsageAccessUtils.hasUsageAccess(this)
-        activeLauncherViewModel.loadApps(forceRefresh = true)
-        activeLauncherViewModel.refreshUsage()
-        previewLauncherViewModel.loadApps(forceRefresh = true)
-        previewLauncherViewModel.refreshUsage()
+        launcherViewModel.loadApps(forceRefresh = true)
+        launcherViewModel.refreshUsage()
     }
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        if (!isHomeLauncherState.value) {
+        if (!isDefaultLauncher()) {
             isUnlocked = false
             return
         }
@@ -104,7 +140,7 @@ class MainActivity : ComponentActivity() {
                 requirePassword()
             }
             Handler(Looper.getMainLooper()).post {
-                val intent = Intent(this, MainActivity::class.java).apply {
+                val intent = Intent(this, ActiveLauncherActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 }
                 startActivity(intent)
@@ -113,7 +149,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun ensureUnlocked(action: () -> Unit) {
-        if (!isHomeLauncherState.value) {
+        if (!isDefaultLauncher()) {
             action()
             return
         }

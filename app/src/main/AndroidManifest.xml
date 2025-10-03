@@ -23,7 +23,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LauncherApp">
         <activity
-            android:name=".MainActivity"
+            android:name=".PreviewLauncherActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.LauncherApp">
@@ -31,9 +31,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
 
-
-            <!-- This tells Android our app can act as a launcher -->
+        <activity
+            android:name=".ActiveLauncherActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.LauncherApp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
