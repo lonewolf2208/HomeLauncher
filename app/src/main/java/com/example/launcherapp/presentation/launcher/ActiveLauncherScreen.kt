@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.example.launcherapp.domain.model.AppInfo
 import com.example.launcherapp.drawableToImageBitmap
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.launcherapp.ui.theme.LauncherAppTheme
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -533,16 +534,18 @@ private val previewActiveUiState = LauncherUiState(
 @Preview(name = "Active Launcher", showBackground = true, backgroundColor = 0xFF050512)
 @Composable
 private fun ActiveLauncherScreenPreview() {
-    ActiveLauncherScreen(
-        uiState = previewActiveUiState,
-        showPasswordPrompt = false,
-        passwordError = null,
-        onAttemptUnlock = {},
-        onCancelUnlock = {},
-        onRequestSetLauncher = {},
-        onOpenDefaultSettings = {},
-        onOpenSystemSettings = {},
-        onOpenApp = {},
-        onLongPressApp = {}
-    )
+    LauncherAppTheme(darkTheme = true) {
+        ActiveLauncherScreen(
+            uiState = previewActiveUiState,
+            showPasswordPrompt = false,
+            passwordError = null,
+            onAttemptUnlock = {},
+            onCancelUnlock = {},
+            onRequestSetLauncher = {},
+            onOpenDefaultSettings = {},
+            onOpenSystemSettings = {},
+            onOpenApp = {},
+            onLongPressApp = {}
+        )
+    }
 }

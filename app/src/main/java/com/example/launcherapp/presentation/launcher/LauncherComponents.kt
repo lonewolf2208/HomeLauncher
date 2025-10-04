@@ -49,7 +49,7 @@ import com.example.launcherapp.domain.model.AppUsageSnapshot
 import com.example.launcherapp.drawableToImageBitmap
 
 @Composable
-fun LauncherHeader(timeText: String, appCount: Int, isHomeLauncher: Boolean) {
+fun LauncherHeader(appCount: Int, isHomeLauncher: Boolean, subtitle: String? = null) {
     val titleColor = if (isHomeLauncher) {
         MaterialTheme.colorScheme.onBackground
     } else {
@@ -73,16 +73,6 @@ fun LauncherHeader(timeText: String, appCount: Int, isHomeLauncher: Boolean) {
             fontWeight = FontWeight.Bold,
             color = titleColor
         )
-        Text(
-            text = timeText,
-            style = MaterialTheme.typography.titleMedium,
-            color = subtitleColor
-        )
-        Text(
-            text = statusText,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-        )
     }
 }
 
@@ -90,22 +80,22 @@ fun LauncherHeader(timeText: String, appCount: Int, isHomeLauncher: Boolean) {
 fun StatusBanner(isHomeLauncher: Boolean) {
     val label: String
     val description: String
-    val borderColor: Color
     val backgroundColor: Color
-    val textColor: Color
+    val borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+    val accentColor = if (isHomeLauncher) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.secondary
+    }
 
     if (isHomeLauncher) {
         label = "Active Launcher"
         description = "Nebula Home currently powers your device navigation."
-        borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-        backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-        textColor = MaterialTheme.colorScheme.primary
+        backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh
     } else {
         label = "Preview Mode"
         description = "Set Nebula Home as default to lock the universe in place."
-        borderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f)
-        backgroundColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
-        textColor = MaterialTheme.colorScheme.secondary
+        backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh
     }
 
     Surface(
@@ -121,12 +111,12 @@ fun StatusBanner(isHomeLauncher: Boolean) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelLarge,
-                color = textColor
+                color = accentColor
             )
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

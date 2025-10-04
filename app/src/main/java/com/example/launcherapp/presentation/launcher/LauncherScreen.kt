@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.launcherapp.domain.model.AppInfo
 import com.example.launcherapp.domain.model.AppUsageSnapshot
+import com.example.launcherapp.ui.theme.LauncherAppTheme
 
 @Composable
 fun LauncherScreen(
@@ -96,18 +97,20 @@ private val previewSetupUiState = LauncherUiState(
 @Preview(name = "Launcher · Active", showBackground = true, backgroundColor = 0xFF050512)
 @Composable
 private fun LauncherScreenActivePreview() {
-    ActiveLauncherScreen(
-        uiState = previewActiveUiState,
-        showPasswordPrompt = false,
-        passwordError = null,
-        onAttemptUnlock = {},
-        onCancelUnlock = {},
-        onRequestSetLauncher = {},
-        onOpenDefaultSettings = {},
-        onOpenSystemSettings = {},
-        onOpenApp = {},
-        onLongPressApp = {}
-    )
+    LauncherAppTheme(darkTheme = true) {
+        ActiveLauncherScreen(
+            uiState = previewActiveUiState,
+            showPasswordPrompt = false,
+            passwordError = null,
+            onAttemptUnlock = {},
+            onCancelUnlock = {},
+            onRequestSetLauncher = {},
+            onOpenDefaultSettings = {},
+            onOpenSystemSettings = {},
+            onOpenApp = {},
+            onLongPressApp = {}
+        )
+    }
 }
 
 @Preview(name = "Launcher · Setup", showBackground = true, backgroundColor = 0xFF120718)
@@ -129,16 +132,18 @@ private fun LauncherScreenSetupPreview() {
 @Preview(name = "Launcher · Unlock Prompt", showBackground = true, backgroundColor = 0xFF050512)
 @Composable
 private fun LauncherScreenUnlockPreview() {
-    ActiveLauncherScreen(
-        uiState = previewActiveUiState,
-        showPasswordPrompt = true,
-        passwordError = "Incorrect password. Try again.",
-        onAttemptUnlock = {},
-        onCancelUnlock = {},
-        onRequestSetLauncher = {},
-        onOpenDefaultSettings = {},
-        onOpenSystemSettings = {},
-        onOpenApp = {},
-        onLongPressApp = {}
-    )
+    LauncherAppTheme(darkTheme = true) {
+        ActiveLauncherScreen(
+            uiState = previewActiveUiState,
+            showPasswordPrompt = true,
+            passwordError = "Incorrect password. Try again.",
+            onAttemptUnlock = {},
+            onCancelUnlock = {},
+            onRequestSetLauncher = {},
+            onOpenDefaultSettings = {},
+            onOpenSystemSettings = {},
+            onOpenApp = {},
+            onLongPressApp = {}
+        )
+    }
 }

@@ -25,6 +25,7 @@ import com.example.launcherapp.presentation.launcher.ActiveLauncherScreen
 import com.example.launcherapp.presentation.launcher.ActiveLauncherViewModel
 import com.example.launcherapp.presentation.launcher.AppSelectionDialog
 import com.example.launcherapp.presentation.launcher.LauncherViewModelFactory
+import com.example.launcherapp.ui.theme.LauncherAppTheme
 
 class ActiveLauncherActivity : ComponentActivity() {
 
@@ -47,62 +48,64 @@ class ActiveLauncherActivity : ComponentActivity() {
         AppUsageMonitorWorker.enqueue(this)
 
         setContent {
-            val uiState by launcherViewModel.uiState.collectAsState()
-            var showAppSelection by remember { mutableStateOf(false) }
-            var selectedPackages by remember { mutableStateOf(uiState.allowedPackages.toSet()) }
+            LauncherAppTheme(darkTheme = true) {
+                val uiState by launcherViewModel.uiState.collectAsState()
+                var showAppSelection by remember { mutableStateOf(false) }
+                var selectedPackages by remember { mutableStateOf(uiState.allowedPackages.toSet()) }
 
-            LaunchedEffect(Unit) {
-                launcherViewModel.loadApps()
-                launcherViewModel.refreshUsage()
-            }
-
-            LaunchedEffect(uiState.allowedPackages) {
-                if (!showAppSelection) {
-                    selectedPackages = uiState.allowedPackages.toSet()
+                LaunchedEffect(Unit) {
+                    launcherViewModel.loadApps()
+                    launcherViewModel.refreshUsage()
                 }
-            }
 
-            ActiveLauncherScreen(
-                uiState = uiState,
-                showPasswordPrompt = showPasswordPrompt.value,
-                passwordError = passwordError.value,
-                onAttemptUnlock = { attemptUnlock(it) },
-                onCancelUnlock = { cancelUnlock() },
-                onRequestSetLauncher = {
-                    if (uiState.selectionLocked) {
-                        return@ActiveLauncherScreen
-                    }
-                    if (uiState.availableApps.isNotEmpty()) {
+                LaunchedEffect(uiState.allowedPackages) {
+                    if (!showAppSelection) {
                         selectedPackages = uiState.allowedPackages.toSet()
-                        showAppSelection = true
                     }
-                },
-                onOpenDefaultSettings = { ensureUnlocked { openDefaultAppsSettings() } },
-                onOpenSystemSettings = { ensureUnlocked { openSystemSettings() } },
-                onOpenApp = { app -> openApp(app) },
-                onLongPressApp = { app -> ensureUnlocked { openAppDetails(app) } }
-            )
+                }
 
-            if (showAppSelection) {
-                AppSelectionDialog(
-                    apps = uiState.availableApps,
-                    initialSelection = selectedPackages,
-                    initialLimits = uiState.usageSnapshots.mapValues { it.value.limitMinutes },
-                    onConfirm = { selection, limits ->
-                        if (selection.isNotEmpty()) {
-                            val confirmed = selection.toSet()
-                            selectedPackages = confirmed
-                            launcherViewModel.applySelection(
-                                packages = confirmed,
-                                usageLimitsMinutes = limits,
-                                lockSelection = true
-                            )
-                            showAppSelection = false
-                            ensureUnlocked { requestHomeRole() }
+                ActiveLauncherScreen(
+                    uiState = uiState,
+                    showPasswordPrompt = showPasswordPrompt.value,
+                    passwordError = passwordError.value,
+                    onAttemptUnlock = { attemptUnlock(it) },
+                    onCancelUnlock = { cancelUnlock() },
+                    onRequestSetLauncher = {
+                        if (uiState.selectionLocked) {
+                            return@ActiveLauncherScreen
+                        }
+                        if (uiState.availableApps.isNotEmpty()) {
+                            selectedPackages = uiState.allowedPackages.toSet()
+                            showAppSelection = true
                         }
                     },
-                    onDismiss = { showAppSelection = false }
+                    onOpenDefaultSettings = { ensureUnlocked { openDefaultAppsSettings() } },
+                    onOpenSystemSettings = { ensureUnlocked { openSystemSettings() } },
+                    onOpenApp = { app -> openApp(app) },
+                    onLongPressApp = { app -> ensureUnlocked { openAppDetails(app) } }
                 )
+
+                if (showAppSelection) {
+                    AppSelectionDialog(
+                        apps = uiState.availableApps,
+                        initialSelection = selectedPackages,
+                        initialLimits = uiState.usageSnapshots.mapValues { it.value.limitMinutes },
+                        onConfirm = { selection, limits ->
+                            if (selection.isNotEmpty()) {
+                                val confirmed = selection.toSet()
+                                selectedPackages = confirmed
+                                launcherViewModel.applySelection(
+                                    packages = confirmed,
+                                    usageLimitsMinutes = limits,
+                                    lockSelection = true
+                                )
+                                showAppSelection = false
+                                ensureUnlocked { requestHomeRole() }
+                            }
+                        },
+                        onDismiss = { showAppSelection = false }
+                    )
+                }
             }
         }
     }

@@ -17,12 +17,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.example.launcherapp.data.usage.AppUsageMonitorWorker
 import com.example.launcherapp.data.usage.UsageAccessUtils
 import com.example.launcherapp.presentation.launcher.AppSelectionDialog
 import com.example.launcherapp.presentation.launcher.LauncherViewModelFactory
 import com.example.launcherapp.presentation.launcher.PreviewLauncherScreen
 import com.example.launcherapp.presentation.launcher.PreviewLauncherViewModel
+import com.example.launcherapp.ui.theme.LauncherAppTheme
 
 class PreviewLauncherActivity : ComponentActivity() {
 
@@ -43,64 +43,66 @@ class PreviewLauncherActivity : ComponentActivity() {
         accessibilityEnabledState.value = ForegroundAppAccessibilityService.isEnabled(this)
 
         setContent {
-            val uiState by launcherViewModel.uiState.collectAsState()
-            val hasUsageAccess by usageAccessGrantedState
-            val accessibilityEnabled by accessibilityEnabledState
-            var showAppSelection by remember { mutableStateOf(false) }
-            var selectedPackages by remember { mutableStateOf(uiState.allowedPackages.toSet()) }
+            LauncherAppTheme(darkTheme = true) {
+                val uiState by launcherViewModel.uiState.collectAsState()
+                val hasUsageAccess by usageAccessGrantedState
+                val accessibilityEnabled by accessibilityEnabledState
+                var showAppSelection by remember { mutableStateOf(false) }
+                var selectedPackages by remember { mutableStateOf(uiState.allowedPackages.toSet()) }
 
-            LaunchedEffect(Unit) {
-                launcherViewModel.loadApps()
-                launcherViewModel.refreshUsage()
-            }
-
-            LaunchedEffect(uiState.allowedPackages) {
-                if (!showAppSelection) {
-                    selectedPackages = uiState.allowedPackages.toSet()
+                LaunchedEffect(Unit) {
+                    launcherViewModel.loadApps()
+                    launcherViewModel.refreshUsage()
                 }
-            }
 
-            PreviewLauncherScreen(
-                uiState = uiState,
-                showPasswordPrompt = false,
-                passwordError = null,
-                hasUsageAccess = hasUsageAccess,
-                isAccessibilityEnabled = accessibilityEnabled,
-                onAttemptUnlock = {},
-                onCancelUnlock = {},
-                onRequestSetLauncher = {
-                    if (uiState.availableApps.isNotEmpty()) {
+                LaunchedEffect(uiState.allowedPackages) {
+                    if (!showAppSelection) {
                         selectedPackages = uiState.allowedPackages.toSet()
-                        showAppSelection = true
                     }
-                },
-                onOpenDefaultSettings = { openDefaultAppsSettings() },
-                onRequestUsagePermission = { UsageAccessUtils.openUsageAccessSettings(this) },
-                onRequestAccessibility = {
-                    startActivity(ForegroundAppAccessibilityService.createSettingsIntent())
                 }
-            )
 
-            if (showAppSelection) {
-                AppSelectionDialog(
-                    apps = uiState.availableApps,
-                    initialSelection = selectedPackages,
-                    initialLimits = uiState.usageSnapshots.mapValues { it.value.limitMinutes },
-                    onConfirm = { selection, limits ->
-                        if (selection.isNotEmpty()) {
-                            val confirmed = selection.toSet()
-                            selectedPackages = confirmed
-                            launcherViewModel.applySelection(
-                                packages = confirmed,
-                                usageLimitsMinutes = limits,
-                                lockSelection = false
-                            )
-                            showAppSelection = false
-                            requestHomeRole()
+                PreviewLauncherScreen(
+                    uiState = uiState,
+                    showPasswordPrompt = false,
+                    passwordError = null,
+                    hasUsageAccess = hasUsageAccess,
+                    isAccessibilityEnabled = accessibilityEnabled,
+                    onAttemptUnlock = {},
+                    onCancelUnlock = {},
+                    onRequestSetLauncher = {
+                        if (uiState.availableApps.isNotEmpty()) {
+                            selectedPackages = uiState.allowedPackages.toSet()
+                            showAppSelection = true
                         }
                     },
-                    onDismiss = { showAppSelection = false }
+                    onOpenDefaultSettings = { openDefaultAppsSettings() },
+                    onRequestUsagePermission = { UsageAccessUtils.openUsageAccessSettings(this) },
+                    onRequestAccessibility = {
+                        startActivity(ForegroundAppAccessibilityService.createSettingsIntent())
+                    }
                 )
+
+                if (showAppSelection) {
+                    AppSelectionDialog(
+                        apps = uiState.availableApps,
+                        initialSelection = selectedPackages,
+                        initialLimits = uiState.usageSnapshots.mapValues { it.value.limitMinutes },
+                        onConfirm = { selection, limits ->
+                            if (selection.isNotEmpty()) {
+                                val confirmed = selection.toSet()
+                                selectedPackages = confirmed
+                                launcherViewModel.applySelection(
+                                    packages = confirmed,
+                                    usageLimitsMinutes = limits,
+                                    lockSelection = false
+                                )
+                                showAppSelection = false
+                                requestHomeRole()
+                            }
+                        },
+                        onDismiss = { showAppSelection = false }
+                    )
+                }
             }
         }
     }
