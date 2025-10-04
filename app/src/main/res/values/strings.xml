@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">LauncherApp</string>
+    <string name="accessibility_service_description">Nebula Home monitors the foreground app to enforce time limits.</string>
 </resources>

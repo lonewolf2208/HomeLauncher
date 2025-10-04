@@ -35,17 +35,17 @@ fun LauncherScreen(
             onLongPressApp = onLongPressApp
         )
     } else {
-        PreviewLauncherScreen(
-            uiState = uiState,
-            showPasswordPrompt = showPasswordPrompt,
-            passwordError = passwordError,
-            hasUsageAccess = hasUsageAccess,
-            onAttemptUnlock = onAttemptUnlock,
-            onCancelUnlock = onCancelUnlock,
-            onRequestSetLauncher = onRequestSetLauncher,
-            onOpenDefaultSettings = onOpenDefaultSettings,
-            onRequestUsagePermission = onRequestUsagePermission
-        )
+//        PreviewLauncherScreen(
+//            uiState = uiState,
+//            showPasswordPrompt = showPasswordPrompt,
+//            passwordError = passwordError,
+//            hasUsageAccess = hasUsageAccess,
+//            onAttemptUnlock = onAttemptUnlock,
+//            onCancelUnlock = onCancelUnlock,
+//            onRequestSetLauncher = onRequestSetLauncher,
+//            onOpenDefaultSettings = onOpenDefaultSettings,
+//            onRequestUsagePermission = onRequestUsagePermission,
+//        )
     }
 }
 
@@ -113,17 +113,17 @@ private fun LauncherScreenActivePreview() {
 @Preview(name = "Launcher · Setup", showBackground = true, backgroundColor = 0xFF120718)
 @Composable
 private fun LauncherScreenSetupPreview() {
-    PreviewLauncherScreen(
-        uiState = previewSetupUiState,
-        showPasswordPrompt = false,
-        passwordError = null,
-        hasUsageAccess = false,
-        onAttemptUnlock = {},
-        onCancelUnlock = {},
-        onRequestSetLauncher = {},
-        onOpenDefaultSettings = {},
-        onRequestUsagePermission = {}
-    )
+//    PreviewLauncherScreen(
+//        uiState = previewSetupUiState,
+//        showPasswordPrompt = false,
+//        passwordError = null,
+//        hasUsageAccess = false,
+//        onAttemptUnlock = {},
+//        onCancelUnlock = {},
+//        onRequestSetLauncher = {},
+//        onOpenDefaultSettings = {},
+//        onRequestUsagePermission = {}
+//    )
 }
 
 @Preview(name = "Launcher · Unlock Prompt", showBackground = true, backgroundColor = 0xFF050512)

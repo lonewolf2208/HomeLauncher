@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import com.example.launcherapp.data.usage.ForegroundAppAccessibilityService
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -34,14 +35,17 @@ class PreviewLauncherActivity : ComponentActivity() {
     }
 
     private val usageAccessGrantedState = mutableStateOf(false)
+    private val accessibilityEnabledState = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         usageAccessGrantedState.value = UsageAccessUtils.hasUsageAccess(this)
+        accessibilityEnabledState.value = ForegroundAppAccessibilityService.isEnabled(this)
 
         setContent {
             val uiState by launcherViewModel.uiState.collectAsState()
             val hasUsageAccess by usageAccessGrantedState
+            val accessibilityEnabled by accessibilityEnabledState
             var showAppSelection by remember { mutableStateOf(false) }
             var selectedPackages by remember { mutableStateOf(uiState.allowedPackages.toSet()) }
 
@@ -61,6 +65,7 @@ class PreviewLauncherActivity : ComponentActivity() {
                 showPasswordPrompt = false,
                 passwordError = null,
                 hasUsageAccess = hasUsageAccess,
+                isAccessibilityEnabled = accessibilityEnabled,
                 onAttemptUnlock = {},
                 onCancelUnlock = {},
                 onRequestSetLauncher = {
@@ -70,7 +75,10 @@ class PreviewLauncherActivity : ComponentActivity() {
                     }
                 },
                 onOpenDefaultSettings = { openDefaultAppsSettings() },
-                onRequestUsagePermission = { UsageAccessUtils.openUsageAccessSettings(this) }
+                onRequestUsagePermission = { UsageAccessUtils.openUsageAccessSettings(this) },
+                onRequestAccessibility = {
+                    startActivity(ForegroundAppAccessibilityService.createSettingsIntent())
+                }
             )
 
             if (showAppSelection) {
@@ -100,6 +108,7 @@ class PreviewLauncherActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         usageAccessGrantedState.value = UsageAccessUtils.hasUsageAccess(this)
+        accessibilityEnabledState.value = ForegroundAppAccessibilityService.isEnabled(this)
         if (isDefaultLauncher()) {
             startActivity(
                 Intent(this, ActiveLauncherActivity::class.java).apply {

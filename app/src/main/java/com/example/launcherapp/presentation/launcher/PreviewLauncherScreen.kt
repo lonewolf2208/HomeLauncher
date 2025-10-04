@@ -42,11 +42,13 @@ fun PreviewLauncherScreen(
     showPasswordPrompt: Boolean,
     passwordError: String?,
     hasUsageAccess: Boolean,
+    isAccessibilityEnabled: Boolean,
     onAttemptUnlock: (String) -> Unit,
     onCancelUnlock: () -> Unit,
     onRequestSetLauncher: () -> Unit,
     onOpenDefaultSettings: () -> Unit,
-    onRequestUsagePermission: () -> Unit
+    onRequestUsagePermission: () -> Unit,
+    onRequestAccessibility: () -> Unit
 ) {
     LauncherScreenScaffold(
         isHomeLauncher = false,
@@ -60,9 +62,11 @@ fun PreviewLauncherScreen(
             currentTimeText = currentTimeText,
             uiState = uiState,
             hasUsageAccess = hasUsageAccess,
+            isAccessibilityEnabled = isAccessibilityEnabled,
             onRequestSetLauncher = onRequestSetLauncher,
             onOpenDefaultSettings = onOpenDefaultSettings,
-            onRequestUsagePermission = onRequestUsagePermission
+            onRequestUsagePermission = onRequestUsagePermission,
+            onRequestAccessibility = onRequestAccessibility
         )
     }
 }
@@ -73,9 +77,11 @@ private fun PreviewLauncherContent(
     currentTimeText: String,
     uiState: LauncherUiState,
     hasUsageAccess: Boolean,
+    isAccessibilityEnabled: Boolean,
     onRequestSetLauncher: () -> Unit,
     onOpenDefaultSettings: () -> Unit,
-    onRequestUsagePermission: () -> Unit
+    onRequestUsagePermission: () -> Unit,
+    onRequestAccessibility: () -> Unit
 ) {
     val dateFormatter = remember { SimpleDateFormat("EEEE, MMM d", Locale.getDefault()) }
     val friendlyDate = remember(currentTime) { dateFormatter.format(currentTime) }
@@ -101,8 +107,10 @@ private fun PreviewLauncherContent(
                 friendlyDate = friendlyDate,
                 appCount = uiState.visibleApps.size,
                 hasUsageAccess = hasUsageAccess,
+                isAccessibilityEnabled = isAccessibilityEnabled,
                 onRequestSetLauncher = onRequestSetLauncher,
-                onRequestUsagePermission = onRequestUsagePermission
+                onRequestUsagePermission = onRequestUsagePermission,
+                onRequestAccessibility = onRequestAccessibility
             )
         }
 
@@ -129,8 +137,10 @@ private fun PreviewSummaryCard(
     friendlyDate: String,
     appCount: Int,
     hasUsageAccess: Boolean,
+    isAccessibilityEnabled: Boolean,
     onRequestSetLauncher: () -> Unit,
-    onRequestUsagePermission: () -> Unit
+    onRequestUsagePermission: () -> Unit,
+    onRequestAccessibility: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -187,6 +197,35 @@ private fun PreviewSummaryCard(
                             TextButton(onClick = onRequestUsagePermission) {
                                 Text("Grant access", color = MaterialTheme.colorScheme.error)
                             }
+                        }
+                    }
+                }
+            }
+
+            if (!isAccessibilityEnabled) {
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f))
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "Enable live blocking",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                        Text(
+                            text = "Turn on Nebula's accessibility service so time limits take effect immediately.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                        TextButton(onClick = onRequestAccessibility) {
+                            Text("Open accessibility settings")
                         }
                     }
                 }
@@ -375,10 +414,12 @@ private fun PreviewLauncherScreenPreview() {
         showPasswordPrompt = false,
         passwordError = null,
         hasUsageAccess = false,
+        isAccessibilityEnabled = false,
         onAttemptUnlock = {},
         onCancelUnlock = {},
         onRequestSetLauncher = {},
         onOpenDefaultSettings = {},
-        onRequestUsagePermission = {}
+        onRequestUsagePermission = {},
+        onRequestAccessibility = {}
     )
 }
