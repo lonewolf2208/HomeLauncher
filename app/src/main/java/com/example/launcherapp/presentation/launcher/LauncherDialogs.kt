@@ -1,5 +1,6 @@
 package com.example.launcherapp.presentation.launcher
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -93,6 +95,79 @@ fun PasswordDialog(
             }
         }
     )
+}
+
+@Composable
+fun LauncherSettingsDialog(
+    onManageApps: () -> Unit,
+    onChangeLauncher: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 10.dp,
+        shape = MaterialTheme.shapes.extraLarge,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurface,
+        title = { Text("Nebula settings") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SettingsOption(
+                    title = "Manage allowed apps",
+                    subtitle = "Pick which apps appear on Nebula Home.",
+                    onClick = onManageApps
+                )
+                SettingsOption(
+                    title = "Change default launcher",
+                    subtitle = "Pick a different home app for this device.",
+                    onClick = onChangeLauncher
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@Composable
+private fun SettingsOption(
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        tonalElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }
 
 @Composable

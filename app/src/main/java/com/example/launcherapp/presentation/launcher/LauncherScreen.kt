@@ -15,8 +15,7 @@ fun LauncherScreen(
     hasUsageAccess: Boolean,
     onAttemptUnlock: (String) -> Unit,
     onCancelUnlock: () -> Unit,
-    onRequestSetLauncher: () -> Unit,
-    onOpenDefaultSettings: () -> Unit,
+    onOpenSettings: () -> Unit,
     onOpenSystemSettings: () -> Unit,
     onOpenApp: (AppInfo) -> Unit,
     onLongPressApp: (AppInfo) -> Unit,
@@ -29,9 +28,7 @@ fun LauncherScreen(
             passwordError = passwordError,
             onAttemptUnlock = onAttemptUnlock,
             onCancelUnlock = onCancelUnlock,
-            onRequestSetLauncher = onRequestSetLauncher,
-            onOpenDefaultSettings = onOpenDefaultSettings,
-            onOpenSystemSettings = onOpenSystemSettings,
+            onOpenSettings = onOpenSettings,
             onOpenApp = onOpenApp,
             onLongPressApp = onLongPressApp
         )
@@ -43,8 +40,8 @@ fun LauncherScreen(
 //            hasUsageAccess = hasUsageAccess,
 //            onAttemptUnlock = onAttemptUnlock,
 //            onCancelUnlock = onCancelUnlock,
-//            onRequestSetLauncher = onRequestSetLauncher,
-//            onOpenDefaultSettings = onOpenDefaultSettings,
+//            onOpenSettings = onOpenSettings,
+//            onOpenSystemSettings = onOpenSystemSettings,
 //            onRequestUsagePermission = onRequestUsagePermission,
 //        )
     }
@@ -104,9 +101,7 @@ private fun LauncherScreenActivePreview() {
             passwordError = null,
             onAttemptUnlock = {},
             onCancelUnlock = {},
-            onRequestSetLauncher = {},
-            onOpenDefaultSettings = {},
-            onOpenSystemSettings = {},
+            onOpenSettings = {},
             onOpenApp = {},
             onLongPressApp = {}
         )
@@ -139,9 +134,7 @@ private fun LauncherScreenUnlockPreview() {
             passwordError = "Incorrect password. Try again.",
             onAttemptUnlock = {},
             onCancelUnlock = {},
-            onRequestSetLauncher = {},
-            onOpenDefaultSettings = {},
-            onOpenSystemSettings = {},
+            onOpenSettings = {},
             onOpenApp = {},
             onLongPressApp = {}
         )

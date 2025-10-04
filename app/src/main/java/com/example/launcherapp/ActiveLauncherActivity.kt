@@ -9,6 +9,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,11 +21,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.example.launcherapp.data.usage.AppUsageMonitorWorker
 import com.example.launcherapp.domain.model.AppInfo
 import com.example.launcherapp.presentation.launcher.ActiveLauncherScreen
 import com.example.launcherapp.presentation.launcher.ActiveLauncherViewModel
 import com.example.launcherapp.presentation.launcher.AppSelectionDialog
+import com.example.launcherapp.presentation.launcher.LauncherSettingsDialog
 import com.example.launcherapp.presentation.launcher.LauncherViewModelFactory
 import com.example.launcherapp.ui.theme.LauncherAppTheme
 
@@ -46,11 +52,13 @@ class ActiveLauncherActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppUsageMonitorWorker.enqueue(this)
+        hideSystemBars()
 
         setContent {
             LauncherAppTheme(darkTheme = true) {
                 val uiState by launcherViewModel.uiState.collectAsState()
                 var showAppSelection by remember { mutableStateOf(false) }
+                var showSettingsMenu by remember { mutableStateOf(false) }
                 var selectedPackages by remember { mutableStateOf(uiState.allowedPackages.toSet()) }
 
                 LaunchedEffect(Unit) {
@@ -70,20 +78,34 @@ class ActiveLauncherActivity : ComponentActivity() {
                     passwordError = passwordError.value,
                     onAttemptUnlock = { attemptUnlock(it) },
                     onCancelUnlock = { cancelUnlock() },
-                    onRequestSetLauncher = {
-                        if (uiState.selectionLocked) {
-                            return@ActiveLauncherScreen
-                        }
-                        if (uiState.availableApps.isNotEmpty()) {
-                            selectedPackages = uiState.allowedPackages.toSet()
-                            showAppSelection = true
+                    onOpenSettings = {
+                        ensureUnlocked {
+                            showSettingsMenu = true
                         }
                     },
-                    onOpenDefaultSettings = { ensureUnlocked { openDefaultAppsSettings() } },
-                    onOpenSystemSettings = { ensureUnlocked { openSystemSettings() } },
                     onOpenApp = { app -> openApp(app) },
                     onLongPressApp = { app -> ensureUnlocked { openAppDetails(app) } }
                 )
+
+                if (showSettingsMenu) {
+                    LauncherSettingsDialog(
+                        onManageApps = {
+                            showSettingsMenu = false
+                            if (uiState.availableApps.isNotEmpty()) {
+                                selectedPackages = uiState.allowedPackages.toSet()
+                                showAppSelection = true
+                            }
+                        },
+                        onChangeLauncher = {
+                            showSettingsMenu = false
+                            ensureUnlocked {
+//                                Toast.makeText(this, "Clicked", Toast.LENGTH_SHORT).show()
+                                openLauncherPicker()
+                            }
+                        },
+                        onDismiss = { showSettingsMenu = false }
+                    )
+                }
 
                 if (showAppSelection) {
                     AppSelectionDialog(
@@ -112,6 +134,7 @@ class ActiveLauncherActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        hideSystemBars()
         if (!isDefaultLauncher()) {
             startActivity(
                 Intent(this, PreviewLauncherActivity::class.java).apply {
@@ -189,29 +212,50 @@ class ActiveLauncherActivity : ComponentActivity() {
     }
 
     private fun requestHomeRole() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val roleManager = getSystemService(RoleManager::class.java)
-            roleManager?.let { rm ->
-                if (rm.isRoleAvailable(RoleManager.ROLE_HOME)) {
-                    val intent = rm.createRequestRoleIntent(RoleManager.ROLE_HOME)
-                    requestRoleLauncher.launch(intent)
-                }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            openDefaultAppsSettings()
+            return
+        }
+
+        val roleManager = getSystemService(RoleManager::class.java)
+        if (roleManager?.isRoleAvailable(RoleManager.ROLE_HOME) == true) {
+            runCatching {
+                val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME)
+                requestRoleLauncher.launch(intent)
+            }.onFailure {
+                openDefaultAppsSettings()
             }
         } else {
-            startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME))
+            openDefaultAppsSettings()
+        }
+    }
+
+    private fun openLauncherPicker() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val roleManager = getSystemService(RoleManager::class.java)
+            when {
+                roleManager == null -> openDefaultAppsSettings()
+                roleManager.isRoleHeld(RoleManager.ROLE_HOME) -> openDefaultAppsSettings()
+                else -> requestHomeRole()
+            }
+        } else {
+            openDefaultAppsSettings()
         }
     }
 
     private fun openDefaultAppsSettings() {
-        val intent = Intent(Settings.ACTION_HOME_SETTINGS)
-        startActivity(intent)
-    }
-
-    private fun openSystemSettings() {
-        val intent = Intent(Settings.ACTION_SETTINGS).apply {
+        val intent = Intent(Settings.ACTION_HOME_SETTINGS).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         startActivity(intent)
+    }
+
+    private fun hideSystemBars() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(WindowInsetsCompat.Type.statusBars())
+        }
     }
 
     private fun openApp(appInfo: AppInfo) {
